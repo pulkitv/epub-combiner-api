@@ -1,4 +1,5 @@
 import express from 'express';
+import cors from 'cors';
 import multer from 'multer';
 import { combineEpubs } from './epubCombiner.js';
 import { config } from '../config.js';
@@ -6,6 +7,14 @@ import fs from 'fs';
 import path from 'path';
 
 const app = express();
+
+// Enable CORS for all origins (configure for production)
+app.use(cors({
+  origin: '*', // Allow all origins for development. In production, specify your domain.
+  methods: ['GET', 'POST'],
+  allowedHeaders: ['Content-Type'],
+  credentials: false
+}));
 
 // Ensure temp directory exists
 if (!fs.existsSync(config.tempDir)) {

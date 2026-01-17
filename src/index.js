@@ -1,0 +1,152 @@
+import express from 'express';
+import multer from 'multer';
+import { combineEpubs } from './epubCombiner.js';
+import { config } from '../config.js';
+import fs from 'fs';
+import path from 'path';
+
+const app = express();
+
+// Ensure temp directory exists
+if (!fs.existsSync(config.tempDir)) {
+  fs.mkdirSync(config.tempDir, { recursive: true });
+}
+
+// Configure multer for file uploads
+const storage = multer.memoryStorage();
+const upload = multer({
+  storage: storage,
+  limits: {
+    fileSize: config.maxFileSize,
+    files: config.maxFiles
+  },
+  fileFilter: (req, file, cb) => {
+    // Check if file is an EPUB
+    if (file.mimetype === 'application/epub+zip' || file.originalname.endsWith('.epub')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only EPUB files are allowed'));
+    }
+  }
+});
+
+// Middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.json({ 
+    status: 'ok', 
+    message: 'EPUB Combiner API is running',
+    config: {
+      maxFiles: config.maxFiles,
+      maxFileSize: `${config.maxFileSize / (1024 * 1024)}MB`
+    }
+  });
+});
+
+// Main API endpoint to combine EPUBs
+app.post('/combine-epubs', upload.array('epubs', config.maxFiles), async (req, res) => {
+  try {
+    // Validate that files were uploaded
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ 
+        error: 'No files uploaded',
+        message: 'Please upload at least one EPUB file' 
+      });
+    }
+
+    // Validate minimum files
+    if (req.files.length < 2) {
+      return res.status(400).json({ 
+        error: 'Insufficient files',
+        message: 'Please upload at least 2 EPUB files to combine' 
+      });
+    }
+
+    // Validate maximum files
+    if (req.files.length > config.maxFiles) {
+      return res.status(400).json({ 
+        error: 'Too many files',
+        message: `Maximum ${config.maxFiles} files allowed` 
+      });
+    }
+
+    console.log(`Processing ${req.files.length} EPUB files...`);
+
+    // Extract file buffers
+    const epubBuffers = req.files.map(file => file.buffer);
+
+    // Combine the EPUBs
+    const combinedEpubBuffer = await combineEpubs(epubBuffers);
+
+    // Set response headers
+    res.setHeader('Content-Type', 'application/epub+zip');
+    res.setHeader('Content-Disposition', `attachment; filename="${config.outputFilename}"`);
+    res.setHeader('Content-Length', combinedEpubBuffer.length);
+
+    // Send the combined EPUB file
+    res.send(combinedEpubBuffer);
+
+    console.log(`Successfully combined ${req.files.length} EPUB files`);
+  } catch (error) {
+    console.error('Error combining EPUBs:', error);
+    res.status(500).json({ 
+      error: 'Internal server error',
+      message: 'Failed to combine EPUB files',
+      details: error.message 
+    });
+  }
+});
+
+// Get configuration
+app.get('/config', (req, res) => {
+  res.json({
+    maxFiles: config.maxFiles,
+    maxFileSize: config.maxFileSize,
+    maxFileSizeMB: config.maxFileSize / (1024 * 1024),
+    port: config.port
+  });
+});
+
+// Error handling middleware
+app.use((error, req, res, next) => {
+  if (error instanceof multer.MulterError) {
+    if (error.code === 'LIMIT_FILE_SIZE') {
+      return res.status(400).json({ 
+        error: 'File too large',
+        message: `File size must be less than ${config.maxFileSize / (1024 * 1024)}MB` 
+      });
+    }
+    if (error.code === 'LIMIT_FILE_COUNT') {
+      return res.status(400).json({ 
+        error: 'Too many files',
+        message: `Maximum ${config.maxFiles} files allowed` 
+      });
+    }
+  }
+  
+  res.status(500).json({ 
+    error: 'Internal server error',
+    message: error.message 
+  });
+});
+
+// 404 handler
+app.use((req, res) => {
+  res.status(404).json({ 
+    error: 'Not found',
+    message: 'The requested endpoint does not exist' 
+  });
+});
+
+// Start server
+const PORT = config.port;
+app.listen(PORT, () => {
+  console.log(`EPUB Combiner API is running on http://localhost:${PORT}`);
+  console.log(`Maximum files per request: ${config.maxFiles}`);
+  console.log(`Maximum file size: ${config.maxFileSize / (1024 * 1024)}MB`);
+});
+
+export default app;

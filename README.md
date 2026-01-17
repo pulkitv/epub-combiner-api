@@ -5,10 +5,12 @@ A REST API that combines multiple EPUB files into a single EPUB file while prese
 ## Features
 
 - ✅ Combine up to 10 EPUB files (configurable)
+- ✅ **Automatic Table of Contents** - Clickable TOC page with links to each book
 - ✅ Preserves all text formatting
 - ✅ Preserves all images and their formatting
 - ✅ Preserves CSS styles
 - ✅ Preserves fonts
+- ✅ Proper image isolation (images from one book won't appear in another)
 - ✅ File size validation
 - ✅ EPUB format validation
 - ✅ Configurable limits
@@ -211,18 +213,24 @@ else:
 
 1. **Upload**: Multiple EPUB files are uploaded via multipart/form-data
 2. **Validation**: Files are validated for type, size, and count
-3. **Extraction**: Each EPUB is unzipped and parsed
-4. **Combination**: 
-   - All chapters are extracted in order
-   - All images are collected and paths are updated
-   - All CSS styles are preserved
-   - All fonts are preserved
-   - Content references are updated to point to new locations
-5. **Generation**: A new valid EPUB file is created with:
-   - Combined content from all EPUBs
+3. **Extraction**: Each EPUB is unzipped and parsed, extracting:
+   - Book metadata (title, author)
+   - All chapters in reading order
+   - Images, CSS styles, and fonts
+4. **Table of Contents Creation**: A styled TOC page is generated with:
+   - Links to the first chapter of each book
+   - Book titles and authors
+   - Clean, readable formatting
+5. **Content Isolation**: Each book's resources are properly namespaced:
+   - Images from book 1 only appear in book 1's chapters
+   - CSS and fonts are correctly scoped
+   - No cross-contamination between books
+6. **Generation**: A new valid EPUB file is created with:
+   - TOC page as the first page
+   - Combined content from all EPUBs in order
    - Proper EPUB structure (mimetype, container.xml, content.opf, toc.ncx)
    - All assets properly referenced
-6. **Response**: The combined EPUB is sent back as a downloadable file
+7. **Response**: The combined EPUB is sent back as a downloadable file
 
 ## Technical Details
 
@@ -267,6 +275,32 @@ NODE_OPTIONS="--max-old-space-size=4096" npm start
 The generated EPUB should be valid according to EPUB 2.0 specification. You can validate it using tools like:
 - [EPUB Validator](https://www.pagina.gmbh/produkte/epub-checker/)
 - [EPUBCheck](https://github.com/w3c/epubcheck)
+
+## Deployment
+
+You can deploy this API to various platforms:
+
+### Render (Recommended)
+1. Go to https://render.com
+2. Connect your GitHub repository
+3. Set Build Command: `npm install`
+4. Set Start Command: `npm start`
+5. Deploy!
+
+### Railway
+1. Go to https://railway.app
+2. Deploy from GitHub repo
+3. Auto-detects Node.js settings
+
+### Fly.io
+```bash
+brew install flyctl
+fly auth login
+fly launch
+fly deploy
+```
+
+**Note:** Free tiers typically have 256-512MB RAM. For large EPUBs, consider upgrading or optimizing memory usage.
 
 ## License
 

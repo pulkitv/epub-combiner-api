@@ -51,6 +51,24 @@ const upload = multer({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Root endpoint - API information
+app.get('/', (req, res) => {
+  res.json({
+    name: 'EPUB Combiner API',
+    version: '1.0.0',
+    description: 'Combine multiple EPUB files into a single EPUB with automatic Table of Contents',
+    endpoints: {
+      'GET /': 'This endpoint - API information',
+      'GET /health': 'Health check',
+      'GET /config': 'API configuration',
+      'POST /combine-epubs': 'Combine multiple EPUB files'
+    },
+    usage: 'POST /combine-epubs with multipart/form-data containing "epubs" files',
+    documentation: 'https://github.com/pulkitv/epub-combiner-api',
+    github: 'https://github.com/pulkitv/epub-combiner-api'
+  });
+});
+
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({ 

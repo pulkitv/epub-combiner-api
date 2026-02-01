@@ -16,9 +16,17 @@ app.use(cors({
   credentials: false
 }));
 
-// Ensure temp directory exists
-if (!fs.existsSync(config.tempDir)) {
-  fs.mkdirSync(config.tempDir, { recursive: true });
+// Ensure temp directory exists (optional, not required for memory storage)
+// Use /tmp for serverless environments (Vercel, etc.)
+const tempDir = process.env.NODE_ENV === 'production' ? '/tmp' : config.tempDir;
+
+try {
+  if (!fs.existsSync(tempDir)) {
+    fs.mkdirSync(tempDir, { recursive: true });
+  }
+} catch (err) {
+  // Silently fail if temp directory creation fails (serverless environments)
+  console.warn('Warning: Could not create temp directory:', tempDir);
 }
 
 // Configure multer for file uploads

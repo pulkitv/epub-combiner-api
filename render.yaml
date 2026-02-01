@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: epub-combiner
+    runtime: node
+    buildCommand: npm install
+    startCommand: npm start
+    rootDir: .
+    envVars:
+      - key: NODE_ENV
+        value: production

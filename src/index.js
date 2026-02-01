@@ -176,12 +176,14 @@ app.use((req, res) => {
   });
 });
 
-// Start server
-const PORT = config.port;
-app.listen(PORT, () => {
-  console.log(`EPUB Combiner API is running on http://localhost:${PORT}`);
-  console.log(`Maximum files per request: ${config.maxFiles}`);
-  console.log(`Maximum file size: ${config.maxFileSize / (1024 * 1024)}MB`);
-});
+// Start server (skip on serverless platforms like Vercel)
+if (!process.env.VERCEL) {
+  const PORT = config.port;
+  app.listen(PORT, () => {
+    console.log(`EPUB Combiner API is running on http://localhost:${PORT}`);
+    console.log(`Maximum files per request: ${config.maxFiles}`);
+    console.log(`Maximum file size: ${config.maxFileSize / (1024 * 1024)}MB`);
+  });
+}
 
 export default app;

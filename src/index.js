@@ -8,13 +8,27 @@ import path from 'path';
 
 const app = express();
 
-// Enable CORS for all origins (configure for production)
-app.use(cors({
-  origin: '*', // Allow all origins for development. In production, specify your domain.
-  methods: ['GET', 'POST'],
-  allowedHeaders: ['Content-Type'],
+const allowlist = [
+  'https://merge-epubs.vercel.app',
+  'http://localhost:3000',
+  'http://localhost:5173',
+  'http://localhost:8080'
+];
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (!origin || allowlist.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error('Not allowed by CORS'));
+  },
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: false
-}));
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 
 // Ensure temp directory exists (optional, not required for memory storage)
 // Use /tmp for serverless environments (Vercel, etc.)

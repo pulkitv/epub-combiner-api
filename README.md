@@ -1,19 +1,25 @@
 # EPUB Combiner API
 
-A REST API that combines multiple EPUB files into a single EPUB file while preserving all text and image formatting.
+A production-ready REST API that combines multiple EPUB files into a single EPUB file while preserving all text, image formatting, styles, and fonts. Built with Node.js, Express, JSZip, and xml2js.
+
+**📦 Current Status**: ✅ Production Deployed  
+**🚀 Live Endpoint**: https://epub-combiner-api.onrender.com  
+**📅 Last Updated**: February 2, 2026
 
 ## Features
 
-- ✅ Combine up to 10 EPUB files (configurable)
-- ✅ **Automatic Table of Contents** - Clickable TOC page with links to each book
-- ✅ Preserves all text formatting
-- ✅ Preserves all images and their formatting
-- ✅ Preserves CSS styles
-- ✅ Preserves fonts
-- ✅ Proper image isolation (images from one book won't appear in another)
-- ✅ File size validation
+- ✅ Combine up to 10 EPUB files per request (configurable)
+- ✅ **Automatic Table of Contents** - Styled TOC page with clickable links to each book's first chapter
+- ✅ Complete text formatting preservation (bold, italic, colors, etc.)
+- ✅ Complete image preservation with proper formatting
+- ✅ CSS styles and fonts fully preserved
+- ✅ **Intelligent resource isolation** - Images, styles, fonts isolated per book to prevent cross-contamination
+- ✅ File size validation (50MB per file, 100MB limit on deployed API)
 - ✅ EPUB format validation
-- ✅ Configurable limits
+- ✅ Configurable limits and settings
+- ✅ CORS enabled for cross-origin requests
+- ✅ Production deployment ready
+- ✅ Memory-efficient file handling with streaming support
 
 ## Installation
 
@@ -143,10 +149,20 @@ Get current API configuration.
 
 ## Example Usage
 
-### Using cURL
+### Using cURL (Local)
 
 ```bash
 curl -X POST http://localhost:3000/combine-epubs \
+  -F "epubs=@book1.epub" \
+  -F "epubs=@book2.epub" \
+  -F "epubs=@book3.epub" \
+  -o combined.epub
+```
+
+### Using cURL (Production API)
+
+```bash
+curl -X POST https://epub-combiner-api.onrender.com/combine-epubs \
   -F "epubs=@book1.epub" \
   -F "epubs=@book2.epub" \
   -F "epubs=@book3.epub" \
@@ -262,37 +278,45 @@ If port 3000 is already in use, change it in `config.js`:
 port: 3001  // or any other available port
 ```
 
-### Memory issues with large files
+## Deployment Status
 
-If you're combining very large EPUB files, you may need to increase Node.js memory:
+### ✅ Currently Deployed
 
-```bash
-NODE_OPTIONS="--max-old-space-size=4096" npm start
-```
+**API Backend** (Production Ready):
+- Platform: Render
+- URL: https://epub-combiner-api.onrender.com
+- Status: Running (tested ✓)
+- Upload Limit: 100MB
+- Test endpoint: `curl https://epub-combiner-api.onrender.com/health`
 
-### EPUB validation
+**Frontend** (Optional):
+- Platform: Vercel
+- URL: https://merge-epubs.vercel.app
+- Status: Ready to call API
 
-The generated EPUB should be valid according to EPUB 2.0 specification. You can validate it using tools like:
-- [EPUB Validator](https://www.pagina.gmbh/produkte/epub-checker/)
-- [EPUBCheck](https://github.com/w3c/epubcheck)
+### How to Deploy to Render
 
-## Deployment
-
-You can deploy this API to various platforms:
-
-### Render (Recommended)
 1. Go to https://render.com
-2. Connect your GitHub repository
-3. Set Build Command: `npm install`
-4. Set Start Command: `npm start`
-5. Deploy!
+2. Connect your GitHub repository (`pulkitv/epub-combiner-api`)
+3. Create new Web Service
+4. Configure:
+   - **Name**: epub-combiner
+   - **Build Command**: `npm install`
+   - **Start Command**: `npm start`
+   - **Root Directory**: `.` (critical!)
+   - **Environment**: NODE_ENV=production
+5. Click "Create Web Service"
+6. Render will auto-deploy on pushes to main branch
 
-### Railway
+### Alternative Deployment Platforms
+
+**Railway** (Easiest):
 1. Go to https://railway.app
 2. Deploy from GitHub repo
 3. Auto-detects Node.js settings
+4. Zero configuration needed
 
-### Fly.io
+**Fly.io**:
 ```bash
 brew install flyctl
 fly auth login
@@ -300,7 +324,20 @@ fly launch
 fly deploy
 ```
 
-**Note:** Free tiers typically have 256-512MB RAM. For large EPUBs, consider upgrading or optimizing memory usage.
+### Production Considerations
+
+- Free tier typically has 256-512MB RAM
+- For large EPUB files (>50MB), consider upgrading instance
+- API endpoint is public; consider adding rate limiting in future
+- See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed deployment guide
+
+## Documentation
+
+- **[README.md](README.md)** - This file (usage guide)
+- **[ARCHITECTURE.md](ARCHITECTURE.md)** - Technical architecture, algorithms, and deep dive
+- **[INTEGRATION.md](INTEGRATION.md)** - Integration examples for multiple languages
+
+For onboarding new developers or AI models (Claude, Cursor, etc.), start with [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ## License
 
